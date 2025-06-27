@@ -1,0 +1,4 @@
+[
+  { "name": "Snippet 1", "content": "console.log('Hello World');" },
+  { "name": "Email template", "content": "Prezados, segue em anexo..." }
+]

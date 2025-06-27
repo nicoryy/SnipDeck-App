@@ -1,0 +1,7 @@
+/node_modules
+snippets.json
+
+/clipboard-system-tray
+/dist
+
+package-lock.json
