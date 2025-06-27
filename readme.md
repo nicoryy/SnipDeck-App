@@ -16,6 +16,9 @@ A lightweight and efficient desktop application that resides in your system tray
 
 ## 🛠️ Getting Started
 
+> **Prerequisite:**  
+> Make sure you have [Visual Studio Code](https://code.visualstudio.com/) installed.
+
 1. **Clone the repository:**
     ```bash
     git clone https://github.com/nicoryy/snipdeck
