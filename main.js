@@ -30,7 +30,7 @@ function buildContextMenu() {
   const fixedItems = [
     { type: "separator" },
     {
-      label: "Adicionar Módulo",
+      label: "Update Snippets",
       click: () => {
         exec(`code "${dataPath}"`, (error) => {
           if (error) console.error("Erro ao abrir VSCode:", error);
@@ -38,7 +38,7 @@ function buildContextMenu() {
       },
     },
     {
-      label: "Sair",
+      label: "Quit",
       click: () => app.quit(),
     },
   ];
