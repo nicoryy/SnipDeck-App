@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Snippet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #2d1b69 0%, #11052c 100%);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            background: rgba(30, 30, 40, 0.95);
+            margin: 20px;
+            height: calc(100vh - 40px);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.3);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 12px 12px 0 0;
+        }
+
+        .header h1 {
+            color: #e0e0e0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .form-container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            padding: 12px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            background: rgba(50, 50, 60, 0.8);
+            color: #e0e0e0;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+            background: rgba(60, 60, 70, 0.9);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: #888;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: auto;
+            padding-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            min-width: 100px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #40404a 0%, #2a2a35 100%);
+            color: #e0e0e0;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .error-message {
+            color: #f44336;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .form-group.error input,
+        .form-group.error textarea {
+            border-color: #f44336;
+        }
+
+        .form-group.error .error-message {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="title">Adicionar Snippet</h1>
+        </div>
+        
+        <div class="form-container">
+            <div class="form-group" id="nameGroup">
+                <label for="name">Nome do Snippet:</label>
+                <input type="text" id="name" placeholder="Digite o nome do snippet..." maxlength="50">
+                <div class="error-message">O nome é obrigatório</div>
+            </div>
+            
+            <div class="form-group" id="contentGroup">
+                <label for="content">Conteúdo:</label>
+                <textarea id="content" placeholder="Digite o conteúdo do snippet..." rows="6"></textarea>
+                <div class="error-message">O conteúdo é obrigatório</div>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="cancel()">Cancelar</button>
+                <button class="btn btn-primary" onclick="save()" id="saveBtn">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        let currentSnippet = null;
+        let currentIndex = null;
+        let isEditMode = false;
+        
+        // Escuta dados do snippet para edição
+        ipcRenderer.on('load-snippet', (event, snippet) => {
+            currentSnippet = snippet;
+            currentIndex = snippet.index;
+            isEditMode = true;
+            
+            document.getElementById('title').textContent = 'Editar Snippet';
+            document.getElementById('name').value = snippet.name;
+            document.getElementById('content').value = snippet.content;
+            document.getElementById('saveBtn').textContent = 'Salvar';
+        });
+        
+        function clearErrors() {
+            document.getElementById('nameGroup').classList.remove('error');
+            document.getElementById('contentGroup').classList.remove('error');
+        }
+        
+        function validateForm() {
+            const name = document.getElementById('name').value.trim();
+            const content = document.getElementById('content').value.trim();
+            let isValid = true;
+            
+            clearErrors();
+            
+            if (!name) {
+                document.getElementById('nameGroup').classList.add('error');
+                isValid = false;
+            }
+            
+            if (!content) {
+                document.getElementById('contentGroup').classList.add('error');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
+        async function save() {
+            if (!validateForm()) {
+                return;
+            }
+            
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Salvando...';
+            
+            const snippet = {
+                name: document.getElementById('name').value.trim(),
+                content: document.getElementById('content').value.trim()
+            };
+            
+            try {
+                const success = await ipcRenderer.invoke('save-snippet', snippet, currentIndex);
+                
+                if (success) {
+                    // Notifica o manager para atualizar a lista
+                    ipcRenderer.send('refresh-manager');
+                    // Fecha a janela do editor
+                    ipcRenderer.send('close-editor');
+                } else {
+                    alert('Erro ao salvar snippet!');
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = isEditMode ? 'Salvar' : 'Criar';
+                }
+            } catch (error) {
+                console.error('Erro ao salvar snippet:', error);
+                alert('Erro ao salvar snippet!');
+                saveBtn.disabled = false;
+                saveBtn.textContent = isEditMode ? 'Salvar' : 'Criar';
+            }
+        }
+        
+        function cancel() {
+            ipcRenderer.send('close-editor');
+        }
+        
+        // Atalhos do teclado
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                save();
+            } else if (e.key === 'Escape') {
+                cancel();
+            }
+        });
+        
+        // Foco no primeiro input
+        document.getElementById('name').focus();
+    </script>
+</body>
+</html>
